@@ -9,9 +9,14 @@
     License: MIT
 */
 
+require_once('viewer.php');
+
 add_action('init', 'FAQBuilder::init');
 register_activation_hook(__FILE__, 'FAQBuilder::activate');
 register_deactivation_hook(__FILE__, 'FAQBuilder::deactivate');
+
+// ショートコードの登録
+add_shortcode('faq-builder', 'show_faq');
 
 class FAQBuilder
 {
@@ -38,9 +43,6 @@ class FAQBuilder
         
             // コールバック関数定義
             add_action('admin_init', [$this, 'save_config']);
-
-            // ショートコードの登録
-            add_shortcode(self::PLUGIN_ID, 'FAQBuilder::shortcode');
         }
     }
 
@@ -91,27 +93,6 @@ class FAQBuilder
             'manage_options',
             self::PLUGIN_ID . self::CONFIG_MENU_SLUG,
             [$this, 'show_config_form']);
-    }
-
-    function shortcode() {
-        global $wpdb;
-        $html = "";
-        $faq_items = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}faq_builder_items");
-        $html .= "<div class='faq-boostar'>";
-        $html .= "<div class='faq-boostar__inner'>";
-        foreach ($faq_items as $faq_item) {
-            $html .= "<h3>";
-            $html .= $faq_item->question;
-            $html .= "</h3>";
-            $html .= "<div class='faq-boostar__answer'>";
-            $html .= "<div class='faq-boostar__answer__text'>";
-            $html .= $faq_item->answer;
-            $html .= "</div>";
-            $html .= "</div>";
-        }
-        $html .= "</div>";
-        $html .= "</div>";
-        return $html;
     }
 
     function show_about_plugin() {
