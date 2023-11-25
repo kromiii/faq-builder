@@ -14,6 +14,12 @@
 <?php
 add_action('init', 'CustomIndexBanner::init');
 
+function faq_boostar_shortcode() {
+    return 'Hello World';
+}
+add_shortcode('faq-boostar', 'faq_boostar_shortcode');
+
+
 class CustomIndexBanner
 {
     const VERSION           = '0.0.4';
@@ -116,7 +122,7 @@ class CustomIndexBanner
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 
                 // 設定画面にリダイレクト
-                wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 302);
+                wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 301);
             }
         }
     }
