@@ -116,10 +116,31 @@ class FAQBuilder
     }
 
     function show_about_plugin() {
-      $html = "<h1>FAQ Builder</h1>";
-      $html .= "<p>PDFからFAQを生成します</p>";
-
-      echo $html;
+        // 画面に表示するHTML
+?>
+        <div class="wrap">
+            <h1>FAQ Builder</h1>
+            <?php // ③：設定完了時のメッセージ ?>
+            <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
+                <div class="updated">
+                    <p><?= $completed_text ?></p>
+                </div>
+            <?php endif; ?>
+            <p>PDFからFAQを生成します</p>
+            <form action="" method="post" enctype="multipart/form-data">
+                <input type="file" name="pdf_file">
+                <input type="submit" value="Upload PDF">
+            </form>
+        </div>
+<?php
+        // $html = "<h1>FAQ Builder</h1>";
+        // $html .= "<p>PDFからFAQを生成します</p>";
+        // // ファイルアップロードボタンの追加
+        // $html .= '<form action="" method="post" enctype="multipart/form-data">';
+        // $html .= '<input type="file" name="pdf_file">';
+        // $html .= '<input type="submit" value="Upload PDF">';
+        // $html .= '</form>';
+        // echo $html;
     }
 
     function show_config_form() {
@@ -128,6 +149,13 @@ class FAQBuilder
 ?>
       <div class="wrap">
         <h1>OPENAI API KEY の設定</h1>
+
+        <?php // ③：設定完了時のメッセージ ?>
+        <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
+            <div class="updated">
+                <p><?= $completed_text ?></p>
+            </div>
+        <?php endif; ?>
 
         <form action="" method='post' id="my-submenu-form">
             <?php // ②：nonceの設定 ?>
@@ -164,6 +192,12 @@ class FAQBuilder
                 // 設定画面にリダイレクト
                 wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 301);
             }
+        }
+
+        // PDF ファイルがアップロードされた場合
+        if (isset($_FILES['pdf_file'])) {
+            set_transient(self::COMPLETE_CONFIG, "PDFファイルのアップロードが完了しました。", 5);
+            wp_safe_redirect(menu_page_url(''), 301);
         }
     }
 
