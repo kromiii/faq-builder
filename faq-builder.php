@@ -10,6 +10,33 @@
  */
 
 add_action('init', 'FAQBuilder::init');
+register_activation_hook(__FILE__, 'your_plugin_activate');
+register_deactivation_hook(__FILE__, 'your_plugin_deactivate');
+
+function your_plugin_activate() {
+    // 必要なデータベーステーブルを作成
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'faq_builder_items';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        question text NOT NULL,
+        answer text NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+
+function your_plugin_deactivate() {
+    // データベーステーブルを削除
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'faq_builder_items';
+    $sql = "DROP TABLE IF EXISTS $table_name;";
+    $wpdb->query($sql);
+}
 
 function faq_boostar_shortcode() {
     $api_key = get_option("faq-builder_api_key");
