@@ -3,7 +3,7 @@
   Plugin Name: FAQ Builder
   Plugin URI:
   Description: PDF から FAQ を作成するプラグイン
-  Version: 0.0.4
+  Version: 0.0.5
   Author: Hiroyuki KUROMIYA
   Author URI: https://github.com/kromiii
   License: GPLv2
@@ -22,6 +22,9 @@ class CustomIndexBanner
     const CREDENTIAL_NAME   = self::PLUGIN_ID . '-nonce-key';
     const PLUGIN_DB_PREFIX  = self::PLUGIN_ID . '_';
 
+     	// config画面のslug
+    const CONFIG_MENU_SLUG  = self::PLUGIN_ID . '-config';
+  
     static function init()
     {
         return new self();
@@ -33,9 +36,13 @@ class CustomIndexBanner
             // メニュー追加
             add_action('admin_menu', [$this, 'set_plugin_menu']);
             add_action('admin_menu', [$this, 'set_plugin_sub_menu']);
-
+        
+            // コールバック関数定義
+            add_action('admin_init', [$this, 'save_config']);
         }
     }
+
+
 
     function set_plugin_menu()
     {
@@ -87,6 +94,30 @@ class CustomIndexBanner
         </form>
       </div>
 <?php
+    }
+
+    /** 設定画面の項目データベースに保存する */
+    function save_config()
+    {
+    
+        // nonceで設定したcredentialのチェック 
+        if (isset($_POST[self::CREDENTIAL_NAME]) && $_POST[self::CREDENTIAL_NAME]) {
+            if (check_admin_referer(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME)) {
+            
+                // 保存処理
+                $key   = 'title';
+                $title = $_POST($value['title']) ? $_POST['title'] : "";
+                                        
+                update_option(self::PLUGIN_DB_PREFIX . $key, $title);
+                $completed_text = "設定の保存が完了しました。管理画面にログインした状態で、トップページにアクセスし変更が正しく反映されたか確認してください。";
+                
+                // 保存が完了したら、wordpressの機構を使って、一度だけメッセージを表示する
+                set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
+                
+                // 設定画面にリダイレクト
+                wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), false);
+            }
+        }
     }
 
 } // end of class
