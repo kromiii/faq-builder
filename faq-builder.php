@@ -1,20 +1,18 @@
 <?php
 /*
   Plugin Name: FAQ Builder
-  Plugin URI:
+  Plugin URI: https://github.com/kromiii/faq-builder-wp
   Description: PDF から FAQ を作成するプラグイン
-  Version: 0.0.6
+  Version: 0.1.0
   Author: Hiroyuki KUROMIYA
   Author URI: https://github.com/kromiii
-  License: GPLv2
+  License: MIT
  */
 
-?>
-
-<?php
-add_action('init', 'CustomIndexBanner::init');
+add_action('init', 'FAQBuilder::init');
 
 function faq_boostar_shortcode() {
+    $api_key = get_option("faq-builder_api_key");
     $html = "";
     $faq_items = [
         [
@@ -27,8 +25,8 @@ function faq_boostar_shortcode() {
         ],
         [
             'question' => '質問3',
-            'answer' => '回答3',
-        ],
+            'answer' => $api_key,
+        ]
     ];
     $html .= "<div class='faq-boostar'>";
     $html .= "<div class='faq-boostar__inner'>";
@@ -49,10 +47,9 @@ function faq_boostar_shortcode() {
 add_shortcode('faq-boostar', 'faq_boostar_shortcode');
 
 
-class CustomIndexBanner
+class FAQBuilder
 {
-    const VERSION           = '0.0.4';
-    const PLUGIN_ID         = 'custom-index-banner';
+    const PLUGIN_ID         = 'faq-builder';
     const CREDENTIAL_ACTION = self::PLUGIN_ID . '-nonce-action';
     const CREDENTIAL_NAME   = self::PLUGIN_ID . '-nonce-key';
     const PLUGIN_DB_PREFIX  = self::PLUGIN_ID . '_';
@@ -83,8 +80,8 @@ class CustomIndexBanner
     function set_plugin_menu()
     {
         add_menu_page(
-            'カスタムバナー',           /* ページタイトル*/
-            'カスタムバナー',           /* メニュータイトル */
+            'FAQ Builder',           /* ページタイトル*/
+            'FAQ Builder',           /* メニュータイトル */
             'manage_options',         /* 権限 */
             'custom-index-banner',    /* ページを開いたときのURL */
             [$this, 'show_about_plugin'],       /* メニューに紐づく画面を描画するcallback関数 */
@@ -104,26 +101,26 @@ class CustomIndexBanner
     }
 
     function show_about_plugin() {
-      $html = "<h1>カスタムバナー</h1>";
-      $html .= "<p>トップページに表示するバナーを指定できます</p>";
+      $html = "<h1>FAQ Builder</h1>";
+      $html .= "<p>PDFからFAQを生成します</p>";
 
       echo $html;
     }
 
     function show_config_form() {
       // ① wp_optionsのデータをひっぱってくる
-      $title = get_option(self::PLUGIN_DB_PREFIX . "_title");
+      $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
 ?>
       <div class="wrap">
-        <h1>カスタムバナーの設定</h1>
+        <h1>OPENAI API KEY の設定</h1>
 
         <form action="" method='post' id="my-submenu-form">
             <?php // ②：nonceの設定 ?>
             <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
 
             <p>
-              <label for="title">タイトル：</label>
-              <input type="text" name="title" value="<?= $title ?>"/>
+              <label for="api_key">APIキー：</label>
+              <input type="text" name="api_key" value="<?= $api_key ?>"/>
             </p>
 
             <p><input type='submit' value='保存' class='button button-primary button-large'></p>
@@ -135,16 +132,15 @@ class CustomIndexBanner
     /** 設定画面の項目データベースに保存する */
     function save_config()
     {
-    
         // nonceで設定したcredentialのチェック 
         if (isset($_POST[self::CREDENTIAL_NAME]) && $_POST[self::CREDENTIAL_NAME]) {
             if (check_admin_referer(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME)) {
             
                 // 保存処理
-                $key   = 'title';
-                $title = $_POST['title'] ? $_POST['title'] : "";
+                $key   = 'api_key';
+                $value = $_POST['api_key'] ? $_POST['api_key'] : "";
                                         
-                update_option(self::PLUGIN_DB_PREFIX . $key, $title);
+                update_option(self::PLUGIN_DB_PREFIX . $key, $value);
                 $completed_text = "設定の保存が完了しました。管理画面にログインした状態で、トップページにアクセスし変更が正しく反映されたか確認してください。";
                 
                 // 保存が完了したら、wordpressの機構を使って、一度だけメッセージを表示する
