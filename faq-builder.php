@@ -21,6 +21,7 @@ class CustomIndexBanner
     const CREDENTIAL_ACTION = self::PLUGIN_ID . '-nonce-action';
     const CREDENTIAL_NAME   = self::PLUGIN_ID . '-nonce-key';
     const PLUGIN_DB_PREFIX  = self::PLUGIN_ID . '_';
+    const COMPLETE_CONFIG   = self::PLUGIN_ID . '-complete-config';
 
      	// config画面のslug
     const CONFIG_MENU_SLUG  = self::PLUGIN_ID . '-config';
