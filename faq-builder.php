@@ -15,7 +15,36 @@
 add_action('init', 'CustomIndexBanner::init');
 
 function faq_boostar_shortcode() {
-    return 'Hello World';
+    $html = "";
+    $faq_items = [
+        [
+            'question' => '質問1',
+            'answer' => '回答1',
+        ],
+        [
+            'question' => '質問2',
+            'answer' => '回答2',
+        ],
+        [
+            'question' => '質問3',
+            'answer' => '回答3',
+        ],
+    ];
+    $html .= "<div class='faq-boostar'>";
+    $html .= "<div class='faq-boostar__inner'>";
+    foreach ($faq_items as $faq_item) {
+        $html .= "<h3>";
+        $html .= $faq_item['question'];
+        $html .= "</h3>";
+        $html .= "<div class='faq-boostar__answer'>";
+        $html .= "<div class='faq-boostar__answer__text'>";
+        $html .= $faq_item['answer'];
+        $html .= "</div>";
+        $html .= "</div>";
+    }
+    $html .= "</div>";
+    $html .= "</div>";
+    return $html;
 }
 add_shortcode('faq-boostar', 'faq_boostar_shortcode');
 
