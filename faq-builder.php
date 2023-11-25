@@ -3,7 +3,7 @@
   Plugin Name: FAQ Builder
   Plugin URI:
   Description: PDF から FAQ を作成するプラグイン
-  Version: 0.0.5
+  Version: 0.0.6
   Author: Hiroyuki KUROMIYA
   Author URI: https://github.com/kromiii
   License: GPLv2
@@ -106,7 +106,7 @@ class CustomIndexBanner
             
                 // 保存処理
                 $key   = 'title';
-                $title = $_POST($value['title']) ? $_POST['title'] : "";
+                $title = $_POST['title'] ? $_POST['title'] : "";
                                         
                 update_option(self::PLUGIN_DB_PREFIX . $key, $title);
                 $completed_text = "設定の保存が完了しました。管理画面にログインした状態で、トップページにアクセスし変更が正しく反映されたか確認してください。";
