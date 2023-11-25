@@ -3,7 +3,7 @@
   Plugin Name: FAQ Builder
   Plugin URI:
   Description: PDF から FAQ を作成するプラグイン
-  Version: 0.0.3
+  Version: 0.0.4
   Author: Hiroyuki KUROMIYA
   Author URI: https://github.com/kromiii
   License: GPLv2
@@ -16,6 +16,12 @@ add_action('init', 'CustomIndexBanner::init');
 
 class CustomIndexBanner
 {
+    const VERSION           = '0.0.4';
+    const PLUGIN_ID         = 'custom-index-banner';
+    const CREDENTIAL_ACTION = self::PLUGIN_ID . '-nonce-action';
+    const CREDENTIAL_NAME   = self::PLUGIN_ID . '-nonce-key';
+    const PLUGIN_DB_PREFIX  = self::PLUGIN_ID . '_';
+
     static function init()
     {
         return new self();
@@ -62,8 +68,24 @@ class CustomIndexBanner
     }
 
     function show_config_form() {
+      // ① wp_optionsのデータをひっぱってくる
+      $title = get_option(self::PLUGIN_DB_PREFIX . "_title");
 ?>
+      <div class="wrap">
         <h1>カスタムバナーの設定</h1>
+
+        <form action="" method='post' id="my-submenu-form">
+            <?php // ②：nonceの設定 ?>
+            <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
+
+            <p>
+              <label for="title">タイトル：</label>
+              <input type="text" name="title" value="<?= $title ?>"/>
+            </p>
+
+            <p><input type='submit' value='保存' class='button button-primary button-large'></p>
+        </form>
+      </div>
 <?php
     }
 
