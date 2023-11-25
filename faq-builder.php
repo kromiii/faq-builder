@@ -116,7 +116,7 @@ class CustomIndexBanner
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 
                 // 設定画面にリダイレクト
-                wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), false);
+                wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 302);
             }
         }
     }
