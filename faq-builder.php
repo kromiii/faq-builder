@@ -10,6 +10,7 @@
 */
 
 require_once('viewer.php');
+require_once('openai.php');
 
 add_action('init', 'FAQBuilder::init');
 register_activation_hook(__FILE__, 'FAQBuilder::activate');
@@ -184,13 +185,15 @@ class FAQBuilder
             $upload_path = $upload_dir['path'];
             $upload_file = $upload_path . "/" . $pdf_file['name'];
             if (move_uploaded_file($pdf_file['tmp_name'], $upload_file)) {
+                $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
+                $openai = new OpenAI($api_key);
+                $file_id = $openai->upload_file($upload_file);
                 $completed_text = "PDFファイルのアップロードが完了しました。";
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 wp_safe_redirect(menu_page_url(''), 301);
             }
         }
     }
-
 } 
 
 ?>
