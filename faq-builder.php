@@ -188,6 +188,11 @@ class FAQBuilder
                 $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
                 $openai = new OpenAI($api_key);
                 $file_id = $openai->upload_file($upload_file);
+                $assistant_id = $openai->create_assistant();
+                $thred_id = $openai->create_thred();
+                $message_id = $openai->create_message($file_id, $thred_id);
+                $result = $openai->run_threads($thred_id, $assistant_id);
+
                 $completed_text = "PDFファイルのアップロードが完了しました。";
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 wp_safe_redirect(menu_page_url(''), 301);
