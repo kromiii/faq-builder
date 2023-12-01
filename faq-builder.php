@@ -29,7 +29,7 @@ class FAQBuilder
 
     // 設定画面のslug
     const CONFIG_MENU_SLUG  = self::PLUGIN_ID . '-config';
-  
+
     static function init()
     {
         return new self();
@@ -41,30 +41,32 @@ class FAQBuilder
             // メニュー追加
             add_action('admin_menu', [$this, 'set_plugin_menu']);
             add_action('admin_menu', [$this, 'set_plugin_sub_menu']);
-        
+
             // コールバック関数定義
             add_action('admin_init', [$this, 'save_config']);
         }
     }
 
-    function activate() {
+    public static function activate()
+    {
         // 必要なデータベーステーブルを作成
         global $wpdb;
         $table_name = $wpdb->prefix . 'faq_builder_items';
         $charset_collate = $wpdb->get_charset_collate();
-    
+
         $sql = "CREATE TABLE $table_name (
             id mediumint(9) NOT NULL AUTO_INCREMENT,
             question text NOT NULL,
             answer text NOT NULL,
             PRIMARY KEY  (id)
         ) $charset_collate;";
-    
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
     }
-    
-    function deactivate() {
+
+    public static function deactivate()
+    {
         // データベーステーブルを削除
         global $wpdb;
         $table_name = $wpdb->prefix . 'faq_builder_items';
@@ -85,7 +87,7 @@ class FAQBuilder
         );
     }
 
-    function set_plugin_sub_menu() 
+    function set_plugin_sub_menu()
     {
         add_submenu_page(
             self::PLUGIN_ID,  /* 親メニューのslug */
@@ -93,22 +95,26 @@ class FAQBuilder
             '設定',
             'manage_options',
             self::PLUGIN_ID . self::CONFIG_MENU_SLUG,
-            [$this, 'show_config_form']);
+            [$this, 'show_config_form']
+        );
     }
 
-    function show_about_plugin() {
+    function show_about_plugin()
+    {
         // 画面に表示するHTML
 ?>
         <style>
             input[type="file"],
             input[type="submit"] {
                 display: block;
-                margin-bottom: 10px; /* 必要に応じてマージンを調整 */
+                margin-bottom: 10px;
+                /* 必要に応じてマージンを調整 */
             }
         </style>
         <div class="wrap">
             <h1>FAQ Builder</h1>
-            <?php // 設定完了時のメッセージ ?>
+            <?php // 設定完了時のメッセージ 
+            ?>
             <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
                 <div class="updated">
                     <p><?= $completed_text ?></p>
@@ -116,7 +122,8 @@ class FAQBuilder
             <?php endif; ?>
             <p>PDFからFAQを生成します</p>
             <form action="" method="post" enctype="multipart/form-data">
-                <?php // nonce の設定 ?>
+                <?php // nonce の設定 
+                ?>
                 <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
                 <p>
                     <label for="pdf_file">PDFファイル：</label>
@@ -125,34 +132,37 @@ class FAQBuilder
                 <input type="submit" value="送信" class="buttton button-primary button-large">
             </form>
         </div>
-<?php
+    <?php
     }
 
-    function show_config_form() {
-      $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
-?>
-      <div class="wrap">
-        <h1>OpenAI API Key の設定</h1>
+    function show_config_form()
+    {
+        $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
+    ?>
+        <div class="wrap">
+            <h1>OpenAI API Key の設定</h1>
 
-        <?php // 設定完了時のメッセージ ?>
-        <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
-            <div class="updated">
-                <p><?= $completed_text ?></p>
-            </div>
-        <?php endif; ?>
+            <?php // 設定完了時のメッセージ 
+            ?>
+            <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
+                <div class="updated">
+                    <p><?= $completed_text ?></p>
+                </div>
+            <?php endif; ?>
 
-        <form action="" method='post' id="my-submenu-form">
-            <?php // nonce の設定 ?>
-            <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
+            <form action="" method='post' id="my-submenu-form">
+                <?php // nonce の設定 
+                ?>
+                <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
 
-            <p>
-              <label for="api_key">APIキー：</label>
-              <input type="text" name="api_key" value="<?= $api_key ?>"/>
-            </p>
+                <p>
+                    <label for="api_key">APIキー：</label>
+                    <input type="text" name="api_key" value="<?= $api_key ?>" />
+                </p>
 
-            <p><input type='submit' value='保存' class='button button-primary button-large'></p>
-        </form>
-      </div>
+                <p><input type='submit' value='保存' class='button button-primary button-large'></p>
+            </form>
+        </div>
 <?php
     }
 
@@ -187,18 +197,14 @@ class FAQBuilder
             if (move_uploaded_file($pdf_file['tmp_name'], $upload_file)) {
                 $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
                 $openai = new OpenAI($api_key);
-                $file_id = $openai->upload_file($upload_file);
-                $assistant_id = $openai->create_assistant();
-                $thred_id = $openai->create_thred();
-                $message_id = $openai->create_message($file_id, $thred_id);
-                $result = $openai->run_threads($thred_id, $assistant_id);
-
-                $completed_text = "PDFファイルのアップロードが完了しました。";
+                $faq_items = $openai->generate_faq($upload_file);
+                save_faq_items($faq_items);
+                $completed_text = "FAQの抽出が完了しました。";
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 wp_safe_redirect(menu_page_url(''), 301);
             }
         }
     }
-} 
+}
 
 ?>

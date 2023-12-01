@@ -1,6 +1,7 @@
 <?php
 
-function show_faq() {
+function show_faq()
+{
     global $wpdb;
 
     $html = "";
@@ -20,4 +21,20 @@ function show_faq() {
     $html .= "</div>";
     $html .= "</div>";
     return $html;
+}
+
+function save_faq_items($faq_items)
+{
+    global $wpdb;
+
+    $wpdb->query("TRUNCATE TABLE {$wpdb->prefix}faq_builder_items");
+    foreach ($faq_items as $faq_item) {
+        $wpdb->insert(
+            "{$wpdb->prefix}faq_builder_items",
+            array(
+                'question' => $faq_item['question'],
+                'answer' => $faq_item['answer'],
+            )
+        );
+    }
 }
