@@ -11,6 +11,7 @@
 
 require_once('openai.php');
 require_once('db.php');
+require_once('view.php');
 
 add_action('init', 'FAQBuilder::init');
 register_activation_hook(__FILE__, 'FAQBuilder::activate');
@@ -64,23 +65,9 @@ class FAQBuilder
     public static function show_faq()
     {
         $db = new DB();
-        $html = "";
         $faq_items = $db->get_faq_items();
-        $html .= "<div class='faq-boostar'>";
-        $html .= "<div class='faq-boostar__inner'>";
-        foreach ($faq_items as $faq_item) {
-            $html .= "<h3>";
-            $html .= $faq_item->question;
-            $html .= "</h3>";
-            $html .= "<div class='faq-boostar__answer'>";
-            $html .= "<div class='faq-boostar__answer__text'>";
-            $html .= $faq_item->answer;
-            $html .= "</div>";
-            $html .= "</div>";
-        }
-        $html .= "</div>";
-        $html .= "</div>";
-        return $html;
+        $view = new View();
+        return $view->generate_faq_section($faq_items);
     }
 
     function set_plugin_menu()
@@ -110,69 +97,16 @@ class FAQBuilder
 
     function show_about_plugin()
     {
-        // 画面に表示するHTML
-?>
-        <style>
-            input[type="file"],
-            input[type="submit"] {
-                display: block;
-                margin-bottom: 10px;
-                /* 必要に応じてマージンを調整 */
-            }
-        </style>
-        <div class="wrap">
-            <h1>FAQ Builder</h1>
-            <?php // 設定完了時のメッセージ 
-            ?>
-            <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
-                <div class="updated">
-                    <p><?= $completed_text ?></p>
-                </div>
-            <?php endif; ?>
-            <p>PDFからFAQを生成します<br />FAQの抽出には３〜５分ほどかかるので気長にお待ちください。</p>
-            <form action="" method="post" enctype="multipart/form-data">
-                <?php // nonce の設定 
-                ?>
-                <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
-                <p>
-                    <label for="pdf_file">PDFファイル：</label>
-                    <input type="file" name="pdf_file">
-                </p>
-                <input type="submit" value="送信" class="buttton button-primary button-large">
-            </form>
-        </div>
-    <?php
+        $view = new View();
+        return $view->show_about_plugin();
     }
 
     function show_config_form()
     {
         $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
-    ?>
-        <div class="wrap">
-            <h1>OpenAI API Key の設定</h1>
-
-            <?php // 設定完了時のメッセージ 
-            ?>
-            <?php if ($completed_text = get_transient(self::COMPLETE_CONFIG)) : ?>
-                <div class="updated">
-                    <p><?= $completed_text ?></p>
-                </div>
-            <?php endif; ?>
-
-            <form action="" method='post' id="my-submenu-form">
-                <?php // nonce の設定 
-                ?>
-                <?php wp_nonce_field(self::CREDENTIAL_ACTION, self::CREDENTIAL_NAME) ?>
-
-                <p>
-                    <label for="api_key">APIキー：</label>
-                    <input type="text" name="api_key" value="<?= $api_key ?>" />
-                </p>
-
-                <p><input type='submit' value='保存' class='button button-primary button-large'></p>
-            </form>
-        </div>
-<?php
+        $completed_text = get_transient(self::COMPLETE_CONFIG);
+        $view = new View();
+        return $view->show_config($api_key, $completed_text);
     }
 
     /** コールバック関数 */
@@ -211,12 +145,9 @@ class FAQBuilder
                 // DBに保存
                 $db = new DB();
                 $db->save_faq_items($faq_items);
-                $completed_text = "FAQの抽出が完了しました。";
-                set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 wp_safe_redirect(menu_page_url(''), 301);
+                echo '<script type="text/javascript">alert("FAQの抽出が完了しました。");</script>';
             }
         }
     }
 }
-
-?>
