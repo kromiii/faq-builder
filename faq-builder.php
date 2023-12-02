@@ -9,9 +9,9 @@
     License: MIT
 */
 
-require_once('openai.php');
-require_once('db.php');
-require_once('view.php');
+require_once('utils/openai.php');
+require_once('utils/db.php');
+require_once('utils/view.php');
 
 add_action('init', 'FAQBuilder::init');
 register_activation_hook(__FILE__, 'FAQBuilder::activate');
