@@ -33,8 +33,6 @@ class View
             <h1>設定</h1>
             <p> OpenAI APIキーを入力してください。</p>
 
-            <?php // 設定完了時のメッセージ 
-            ?>
             <?php if ($completed_text) : ?>
                 <div class="updated">
                     <p><?= $completed_text ?></p>
@@ -42,8 +40,6 @@ class View
             <?php endif; ?>
 
             <form action="" method='post' id="my-submenu-form">
-                <?php // nonce の設定 
-                ?>
                 <?php wp_nonce_field(FAQBuilder::CREDENTIAL_ACTION, FAQBuilder::CREDENTIAL_NAME) ?>
 
                 <p>
@@ -57,7 +53,7 @@ class View
     <?php
     }
 
-    function show_about_plugin()
+    function show_about_plugin($completed_text)
     {
     ?>
         <style>
@@ -69,6 +65,11 @@ class View
             }
         </style>
         <div class="wrap">
+            <?php if ($completed_text) : ?>
+                <div class="updated">
+                    <p><?= $completed_text ?></p>
+                </div>
+            <?php endif; ?>
             <h1>FAQ Builder</h1>
             <p>PDFからFAQを生成します<br />FAQの抽出には３〜５分ほどかかるので気長にお待ちください。</p>
             <form action="" method="post" enctype="multipart/form-data">

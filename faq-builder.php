@@ -26,6 +26,7 @@ class FAQBuilder
     const CREDENTIAL_ACTION = self::PLUGIN_ID . '-nonce-action';
     const CREDENTIAL_NAME   = self::PLUGIN_ID . '-nonce-key';
     const PLUGIN_DB_PREFIX  = self::PLUGIN_ID . '_';
+    const COMPLETE_UPLOAD   = self::PLUGIN_ID . '-complete-upload';
     const COMPLETE_CONFIG   = self::PLUGIN_ID . '-complete-config';
 
     // 設定画面のslug
@@ -97,8 +98,9 @@ class FAQBuilder
 
     function show_about_plugin()
     {
+        $completed_text = get_transient(self::COMPLETE_UPLOAD);
         $view = new View();
-        return $view->show_about_plugin();
+        return $view->show_about_plugin($completed_text);
     }
 
     function show_config_form()
@@ -124,30 +126,43 @@ class FAQBuilder
 
         // API キーの保存
         if (isset($_POST['api_key'])) {
-            $api_key = $_POST['api_key'];
-            update_option(self::PLUGIN_DB_PREFIX . "api_key", $api_key);
-            $completed_text = "APIキーの保存が完了しました。";
-            set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
-            wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 301);
+            $this->save_api_key($_POST['api_key']);
+            $this->redirect_with_message(self::CONFIG_MENU_SLUG, self::COMPLETE_CONFIG, "APIキーの保存が完了しました。");
         }
 
         if (isset($_FILES['pdf_file'])) {
-            // PDFファイルのアップロード
-            $pdf_file = $_FILES['pdf_file'];
-            $upload_dir = wp_upload_dir();
-            $upload_path = $upload_dir['path'];
-            $upload_file = $upload_path . "/" . $pdf_file['name'];
-            if (move_uploaded_file($pdf_file['tmp_name'], $upload_file)) {
-                // FAQの抽出
-                $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
-                $openai = new OpenAI($api_key);
-                $faq_items = $openai->generate_faq($upload_file);
-                // DBに保存
-                $db = new DB();
-                $db->save_faq_items($faq_items);
-                wp_safe_redirect(menu_page_url(''), 301);
-                echo '<script type="text/javascript">alert("FAQの抽出が完了しました。");</script>';
-            }
+            $this->upload_and_generate_faq($_FILES['pdf_file']);
+            $this->redirect_with_message('', self::COMPLETE_UPLOAD, "FAQの抽出が完了しました。");
         }
+    }
+
+    private
+
+    function save_api_key($api_key)
+    {
+        update_option(self::PLUGIN_DB_PREFIX . "api_key", $api_key);
+    }
+
+    function upload_and_generate_faq($pdf_file)
+    {
+        // PDFファイルのアップロード
+        $upload_dir = wp_upload_dir();
+        $upload_path = $upload_dir['path'];
+        $upload_file = $upload_path . "/" . $pdf_file['name'];
+        if (move_uploaded_file($pdf_file['tmp_name'], $upload_file)) {
+            // FAQの抽出
+            $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
+            $openai = new OpenAI($api_key);
+            $faq_items = $openai->generate_faq($upload_file);
+            // DBに保存
+            $db = new DB();
+            $db->save_faq_items($faq_items);
+        }
+    }
+
+    function redirect_with_message($path, $key, $message)
+    {
+        set_transient($key, $message, 5);
+        wp_safe_redirect(menu_page_url($path), 301);
     }
 }
