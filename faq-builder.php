@@ -9,15 +9,15 @@
     License: MIT
 */
 
-require_once('viewer.php');
 require_once('openai.php');
+require_once('db.php');
 
 add_action('init', 'FAQBuilder::init');
 register_activation_hook(__FILE__, 'FAQBuilder::activate');
 register_deactivation_hook(__FILE__, 'FAQBuilder::deactivate');
 
 // ショートコードの登録
-add_shortcode('faq-builder', 'show_faq');
+add_shortcode('faq-builder', 'FAQBuilder::show_faq');
 
 class FAQBuilder
 {
@@ -50,28 +50,37 @@ class FAQBuilder
     public static function activate()
     {
         // 必要なデータベーステーブルを作成
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'faq_builder_items';
-        $charset_collate = $wpdb->get_charset_collate();
-
-        $sql = "CREATE TABLE $table_name (
-            id mediumint(9) NOT NULL AUTO_INCREMENT,
-            question text NOT NULL,
-            answer text NOT NULL,
-            PRIMARY KEY  (id)
-        ) $charset_collate;";
-
-        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-        dbDelta($sql);
+        $db = new DB();
+        $db->create_table();
     }
 
     public static function deactivate()
     {
         // データベーステーブルを削除
-        global $wpdb;
-        $table_name = $wpdb->prefix . 'faq_builder_items';
-        $sql = "DROP TABLE IF EXISTS $table_name;";
-        $wpdb->query($sql);
+        $db = new DB();
+        $db->delete_table();
+    }
+
+    public static function show_faq()
+    {
+        $db = new DB();
+        $html = "";
+        $faq_items = $db->get_faq_items();
+        $html .= "<div class='faq-boostar'>";
+        $html .= "<div class='faq-boostar__inner'>";
+        foreach ($faq_items as $faq_item) {
+            $html .= "<h3>";
+            $html .= $faq_item->question;
+            $html .= "</h3>";
+            $html .= "<div class='faq-boostar__answer'>";
+            $html .= "<div class='faq-boostar__answer__text'>";
+            $html .= $faq_item->answer;
+            $html .= "</div>";
+            $html .= "</div>";
+        }
+        $html .= "</div>";
+        $html .= "</div>";
+        return $html;
     }
 
     function set_plugin_menu()
@@ -120,7 +129,7 @@ class FAQBuilder
                     <p><?= $completed_text ?></p>
                 </div>
             <?php endif; ?>
-            <p>PDFからFAQを生成します</p>
+            <p>PDFからFAQを生成します<br />FAQの抽出には３〜５分ほどかかるので気長にお待ちください。</p>
             <form action="" method="post" enctype="multipart/form-data">
                 <?php // nonce の設定 
                 ?>
@@ -188,17 +197,20 @@ class FAQBuilder
             wp_safe_redirect(menu_page_url(self::CONFIG_MENU_SLUG), 301);
         }
 
-        // PDF ファイルの処理
         if (isset($_FILES['pdf_file'])) {
+            // PDFファイルのアップロード
             $pdf_file = $_FILES['pdf_file'];
             $upload_dir = wp_upload_dir();
             $upload_path = $upload_dir['path'];
             $upload_file = $upload_path . "/" . $pdf_file['name'];
             if (move_uploaded_file($pdf_file['tmp_name'], $upload_file)) {
+                // FAQの抽出
                 $api_key = get_option(self::PLUGIN_DB_PREFIX . "api_key");
                 $openai = new OpenAI($api_key);
                 $faq_items = $openai->generate_faq($upload_file);
-                save_faq_items($faq_items);
+                // DBに保存
+                $db = new DB();
+                $db->save_faq_items($faq_items);
                 $completed_text = "FAQの抽出が完了しました。";
                 set_transient(self::COMPLETE_CONFIG, $completed_text, 5);
                 wp_safe_redirect(menu_page_url(''), 301);
