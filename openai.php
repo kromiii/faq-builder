@@ -1,7 +1,5 @@
 <?php
 
-// include_once('custom_function.php');
-
 class OpenAI
 {
     private $api_key;
