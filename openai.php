@@ -33,7 +33,7 @@ class OpenAI
         // アシスタントを作成
         $assistant_data = json_encode(array(
             "name" => "FAQ Builder",
-            "instructions" => "PDFのマニュアルを受け取って FAQ サイトを生成してください。FAQは日本語で生成してください。",
+            "instructions" => "This assistant generates a FAQ from a manual. Read the pdf file and generate a FAQ. At least 5 questions and answers are required. The response should be in the language of the manual.",
             "tools" => array(
                 array("type" => "retrieval"),
                 array("type" => "function", "function" => $this->custom_function)
@@ -60,7 +60,7 @@ class OpenAI
         // メッセージを送信
         $message_data = array(
             'role' => "user",
-            'content' => "このマニュアルからFAQを生成してください。"
+            'content' => "I want to generate a FAQ from this file."
         );
         curl_setopt($ch, CURLOPT_URL, "https://api.openai.com/v1/threads/$thread_id/messages");
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message_data));
