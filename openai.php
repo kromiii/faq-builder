@@ -81,7 +81,6 @@ class OpenAI
             curl_setopt($ch, CURLOPT_POST, false);
             $run_status_response = json_decode(curl_exec($ch), true);
             $run_status = $run_status_response['status'];
-            echo $run_status . "\n";
             sleep(5);
         } while ($run_status != "requires_action");
 
