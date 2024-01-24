@@ -1,4 +1,4 @@
-# faq-builder-wp
+# FAQ Builder WordPress Plugin
 
 This is a WordPress plugin that extends the [FAQ Builder](https://github.com/kromiii/faq-builder) in the wordpress site.
 
